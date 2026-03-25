@@ -14,12 +14,14 @@
 
 from .InternVLA_A1_3B.configuration_internvla_a1 import QwenA1Config as QwenA1Config
 from .InternVLA_A1_2B.configuration_internvla_a1 import InternA1Config as InternA1Config
+from .f1.configuration_f1 import F1Config as F1Config
 from .pi0.configuration_pi0 import PI0Config as PI0Config
 from .pi05.configuration_pi05 import PI05Config as PI05Config
 
 __all__ = [
-    "QwenA1Config", 
-    "InternA1Config", 
+    "QwenA1Config",
+    "InternA1Config",
+    "F1Config",
     "PI0Config",
     "PI05Config",
 ]

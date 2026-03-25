@@ -201,18 +201,46 @@ class RemapImageKeyTransformFn(DataTransformFn):
     """
     mapping: dict[str, str] = field(default_factory=dict)
 
-    def __call__(self, data: DataDict) -> DataDict: 
+    def __call__(self, data: DataDict) -> DataDict:
         for old_key, new_key in self.mapping.items():
             data[new_key] = data.pop(old_key)
             data[f"{new_key}_mask"] = torch.tensor(True)
-        # create missing keys if necessary
-        if len(self.mapping) < 3:
-            data[f"{OBS_IMAGES}.image2"] = torch.ones_like(data[f"{OBS_IMAGES}.image0"])
-            data[f"{OBS_IMAGES}.image2_mask"] = torch.tensor(False)
-        if len(self.mapping) < 2:
-            data[f"{OBS_IMAGES}.image1"] = torch.ones_like(data[f"{OBS_IMAGES}.image0"])
-            data[f"{OBS_IMAGES}.image1_mask"] = torch.tensor(False)
+
+            old_pad_key = f"{old_key}_is_pad"
+            new_pad_key = f"{new_key}_is_pad"
+            if old_pad_key in data:
+                data[new_pad_key] = data.pop(old_pad_key)
+            else:
+                data[new_pad_key] = self._build_is_pad(data[new_key], is_missing=False)
+
+        # Create missing camera keys and keep mask/_is_pad semantics consistent.
+        base_image_key = f"{OBS_IMAGES}.image0"
+        if base_image_key not in data:
+            return data
+
+        for image_idx in range(3):
+            image_key = f"{OBS_IMAGES}.image{image_idx}"
+            mask_key = f"{image_key}_mask"
+            is_pad_key = f"{image_key}_is_pad"
+
+            if image_key not in data:
+                data[image_key] = torch.ones_like(data[base_image_key])
+                data[mask_key] = torch.tensor(False)
+                data[is_pad_key] = self._build_is_pad(data[image_key], is_missing=True)
+                continue
+
+            if mask_key not in data:
+                data[mask_key] = torch.tensor(True)
+            if is_pad_key not in data:
+                data[is_pad_key] = self._build_is_pad(data[image_key], is_missing=False)
+
         return data
+
+    @staticmethod
+    def _build_is_pad(image: torch.Tensor, is_missing: bool) -> torch.Tensor:
+        if image.ndim >= 4:
+            return torch.full((image.shape[0],), fill_value=is_missing, dtype=torch.bool, device=image.device)
+        return torch.tensor(is_missing, dtype=torch.bool, device=image.device)
 
 
 @DataTransformFn.register_subclass("normalize")

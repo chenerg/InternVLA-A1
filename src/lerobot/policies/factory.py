@@ -23,6 +23,7 @@ import torch
 from lerobot.configs.policies import PreTrainedConfig
 from lerobot.policies.InternVLA_A1_3B.configuration_internvla_a1 import QwenA1Config
 from lerobot.policies.InternVLA_A1_2B.configuration_internvla_a1 import InternA1Config
+from lerobot.policies.f1.configuration_f1 import F1Config
 from lerobot.policies.pi0.configuration_pi0 import PI0Config
 from lerobot.policies.pi05.configuration_pi05 import PI05Config
 from lerobot.policies.pretrained import PreTrainedPolicy
@@ -65,6 +66,11 @@ def get_policy_class(name: str) -> type[PreTrainedPolicy]:
 
         return PI05Policy
 
+    elif name == "f1":
+        from lerobot.policies.f1.modeling_f1 import F1Policy
+
+        return F1Policy
+
     else:
         try:
             return _get_policy_cls_from_policy_name(name=name)
@@ -99,6 +105,8 @@ def make_policy_config(policy_type: str, **kwargs) -> PreTrainedConfig:
         return PI0Config(**kwargs)
     elif policy_type == "pi05":
         return PI05Config(**kwargs)
+    elif policy_type == "f1":
+        return F1Config(**kwargs)
     else:
         try:
             config_cls = PreTrainedConfig.get_choice_class(policy_type)
