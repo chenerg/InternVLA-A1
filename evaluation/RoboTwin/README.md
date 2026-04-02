@@ -63,6 +63,38 @@ By default, using the finetuned InternVLA-A1-3B from [Huggingface](https://huggi
 - **`BASE_OUTPUT_PATH`**: The root directory for evaluation outputs.
   - The final output directory is `${BASE_OUTPUT_PATH}/${TASK_CONFIG}/${TASK_IDX}` (the script variable `OUTPUT_PATH`).
 
+---
+
+## Client/Server Split Inference
+
+You can split environment execution (client) and model inference (server) into two processes.
+
+### 1) Start the inference server
+
+```bash
+python evaluation/RoboTwin/inference_server.py \
+  --ckpt_path InternRobotics/InternVLA-A1-3B-RoboTwin \
+  --stats_key aloha \
+  --resize_size 224 \
+  --dtype float32 \
+  --host 0.0.0.0 \
+  --port 8000
+```
+
+### 2) Start the inference client (RoboTwin env runner)
+
+```bash
+python evaluation/RoboTwin/inference_client.py \
+  --server_url http://127.0.0.1:8000/infer \
+  --task_config demo_clean \
+  --task_idx 0 \
+  --video_dir evaluation/RoboTwin/output/demo_clean/0
+```
+
+> Notes:
+> - The server loads the model and handles input transforms and action post-processing.
+> - The client handles RoboTwin environment stepping, observation collection, and video writing.
+
 
 
 
